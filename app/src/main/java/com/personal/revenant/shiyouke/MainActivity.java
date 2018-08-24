@@ -83,6 +83,7 @@ public class MainActivity extends Activity implements JsApi.JsCallback, UMShareL
         setStatusBg(R.color.colorPrimary);
         url = BASE;
         initView();
+        LogUtils.d("111111111111111");
     }
 
     private void initView() {
@@ -98,7 +99,7 @@ public class MainActivity extends Activity implements JsApi.JsCallback, UMShareL
         loadView = findViewById(R.id.loadView);
         smartRefreshLayout = findViewById(R.id.refreshlayout);
         smartRefreshLayout.setRefreshHeader(new ClassicsHeader(this));
-        smartRefreshLayout.setEnableOverScrollDrag(false);;
+        smartRefreshLayout.setEnableOverScrollDrag(false);
         dWebView = new DWebView(this);
         dWebView.addJavascriptObject(new JsApi(this), null);
         //开启浏览器调试
