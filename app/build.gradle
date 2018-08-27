@@ -1,6 +1,15 @@
 apply plugin: 'com.android.application'
 
 android {
+
+    signingConfigs {
+        config {
+            keyAlias 'key0'
+            keyPassword '111111'
+            storeFile file('F:/DaBaoProject/WebDemo/app/demo.key.jks')
+            storePassword '111111'
+        }
+    }
     compileSdkVersion 27
     defaultConfig {
         applicationId "com.personal.revenant.shiyouke"
@@ -15,11 +24,19 @@ android {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.config
+        }
+
+        debug {
+            signingConfig signingConfigs.config
+
         }
     }
     configurations.all {
         resolutionStrategy.force 'com.android.support:support-annotations:27.1.1'
     }
+
+
 }
 
 dependencies {
@@ -50,4 +67,8 @@ dependencies {
     compile 'com.lzy.net:okgo:3.0.4'
     implementation 'com.apkfuns.logutils:library:1.6.0'
     implementation 'com.github.bumptech.glide:glide:4.8.0'
+
+    compile 'com.amap.api:location:latest.integration'
+
+    compile 'com.mylhyl:acp:1.2.0'
 }

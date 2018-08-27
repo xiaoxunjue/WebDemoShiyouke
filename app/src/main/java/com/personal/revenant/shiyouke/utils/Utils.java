@@ -13,6 +13,8 @@ import com.google.gson.JsonSyntaxException;
 
 import java.net.ConnectException;
 import java.net.SocketTimeoutException;
+import java.text.SimpleDateFormat;
+import java.util.Locale;
 
 /**
  * Created by Administrator on 2018/8/23.
@@ -89,5 +91,21 @@ public class Utils {
             result = context.getResources().getDimensionPixelSize(resourceId);
         }
         return result;
+    }
+
+    private static SimpleDateFormat sdf = null;
+    public  static String formatUTC(long l, String strPattern) {
+        if (TextUtils.isEmpty(strPattern)) {
+            strPattern = "yyyy-MM-dd HH:mm:ss";
+        }
+        if (sdf == null) {
+            try {
+                sdf = new SimpleDateFormat(strPattern, Locale.CHINA);
+            } catch (Throwable e) {
+            }
+        } else {
+            sdf.applyPattern(strPattern);
+        }
+        return sdf == null ? "NULL" : sdf.format(l);
     }
 }

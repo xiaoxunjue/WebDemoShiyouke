@@ -9,7 +9,7 @@
     <Button
         android:id="@+id/test"
         android:layout_width="match_parent"
-        android:visibility="gone"
+        android:visibility="visible"
         android:layout_height="wrap_content"
         android:text="点击" />
 
