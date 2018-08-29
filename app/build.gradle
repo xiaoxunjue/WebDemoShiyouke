@@ -71,4 +71,7 @@ dependencies {
     compile 'com.amap.api:location:latest.integration'
 
     compile 'com.mylhyl:acp:1.2.0'
+    implementation 'com.github.nanchen2251:CompressHelper:1.0.5'
+
+    implementation files('libs/alipaySdk-20180403.jar')
 }

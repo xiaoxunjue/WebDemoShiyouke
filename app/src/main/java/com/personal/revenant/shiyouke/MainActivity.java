@@ -1,6 +1,7 @@
 package com.personal.revenant.shiyouke;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.ClipData;
@@ -12,10 +13,13 @@ import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.provider.ContactsContract;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.AlphaAnimation;
@@ -27,6 +31,7 @@ import android.widget.FrameLayout;
 import android.widget.RelativeLayout;
 import android.widget.Toast;
 
+import com.alipay.sdk.app.PayTask;
 import com.amap.api.location.AMapLocation;
 import com.amap.api.location.AMapLocationClient;
 import com.amap.api.location.AMapLocationClientOption;
@@ -46,14 +51,20 @@ import com.lzy.okgo.model.Response;
 import com.mylhyl.acp.Acp;
 import com.mylhyl.acp.AcpListener;
 import com.mylhyl.acp.AcpOptions;
+import com.nanchen.compresshelper.CompressHelper;
 import com.personal.revenant.shiyouke.bean.PhoneInfo;
+import com.personal.revenant.shiyouke.bean.PhotoOne;
+import com.personal.revenant.shiyouke.bean.PhotoOneGet;
 import com.personal.revenant.shiyouke.bean.TestGoodsBean;
+import com.personal.revenant.shiyouke.bean.WeiXinBean;
 import com.personal.revenant.shiyouke.event.JsApi;
 import com.personal.revenant.shiyouke.utils.GlideImageLoader;
 import com.personal.revenant.shiyouke.utils.GsonUtil;
 import com.personal.revenant.shiyouke.utils.LoadDialog;
+import com.personal.revenant.shiyouke.utils.PayResult;
 import com.personal.revenant.shiyouke.utils.PhoneUtil;
 import com.personal.revenant.shiyouke.utils.Utils;
+import com.personal.revenant.shiyouke.wxapi.WXPayUtils;
 import com.scwang.smartrefresh.header.MaterialHeader;
 import com.scwang.smartrefresh.layout.SmartRefreshLayout;
 import com.scwang.smartrefresh.layout.api.RefreshLayout;
@@ -91,9 +102,16 @@ public class MainActivity extends Activity implements JsApi.JsCallback, UMShareL
     private static final int IMAGE_PICKER = 300;
     private Button button;
     private List<PhoneInfo> list;
+    private ImagePicker imagePicker;
+    private int type_photo;
+    private String userid;
+    private String token;
+    private static final int SDK_PAY_FLAG = 1;
+//    private ImagePicker imagePicker;
 
     private AMapLocationClient locationClient = null;
     private AMapLocationClientOption locationOption = null;
+    private String goodinfo;
 
 //初始化定位
 
@@ -121,6 +139,8 @@ public class MainActivity extends Activity implements JsApi.JsCallback, UMShareL
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+//                aipay();
+//                imagePicker.setSelectLimit(5);
 
 //                if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.READ_CONTACTS)
 //                        != PackageManager.PERMISSION_GRANTED) {
@@ -140,7 +160,7 @@ public class MainActivity extends Activity implements JsApi.JsCallback, UMShareL
 //                }
 
 
-                startLocation();
+//                startLocation();
 
 //                Intent intenta = new Intent(context, ImageGridActivity.class);
 //                startActivityForResult(intenta, IMAGE_PICKER);
@@ -217,7 +237,112 @@ public class MainActivity extends Activity implements JsApi.JsCallback, UMShareL
                 });
 
     }
+    @SuppressLint("HandlerLeak")
+    private Handler mHandler = new Handler() {
+        @SuppressWarnings("unused")
+        public void handleMessage(Message msg) {
+            switch (msg.what) {
+                case SDK_PAY_FLAG: {
+                    @SuppressWarnings("unchecked")
+                    PayResult payResult = new PayResult((Map<String, String>) msg.obj);
+                    /**
+                     对于支付结果，请商户依赖服务端的异步通知结果。同步通知结果，仅作为支付结束的通知。
+                     */
+                    String resultInfo = payResult.getResult();// 同步返回需要验证的信息
+                    String resultStatus = payResult.getResultStatus();
+                    // 判断resultStatus 为9000则代表支付成功
+                    if (TextUtils.equals(resultStatus, "9000")) {
+                        LogUtils.d("支付成功");
+//                        finish();
+//                        Intent jump_gouwuche = new Intent(GoToBuyActivity.this, MainActivity.class);
+////                finish();
+//                        jump_gouwuche.putExtra("jump_gouwuche", 0);
+//                        startActivity(jump_gouwuche);
+//                        // 该笔订单是否真实支付成功，需要依赖服务端的异步通知。
+//                        Toast.makeText(GoToBuyActivity.this, "支付成功", Toast.LENGTH_SHORT).show();
+                    } else {
+                        // 该笔订单真实的支付结果，需要依赖服务端的异步通知。
+//                        Toast.makeText(GoToBuyActivity.this, "支付失败", Toast.LENGTH_SHORT).show();
+                        LogUtils.d("支付失败");
+                    }
+                    break;
+                }
+//                case SDK_AUTH_FLAG: {
+//                    @SuppressWarnings("unchecked")
+//                    AuthResult authResult = new AuthResult((Map<String, String>) msg.obj, true);
+//                    String resultStatus = authResult.getResultStatus();
+//
+//                    // 判断resultStatus 为“9000”且result_code
+//                    // 为“200”则代表授权成功，具体状态码代表含义可参考授权接口文档
+//                    if (TextUtils.equals(resultStatus, "9000") && TextUtils.equals(authResult.getResultCode(), "200")) {
+//                        // 获取alipay_open_id，调支付时作为参数extern_token 的value
+//                        // 传入，则支付账户为该授权账户
+//                        Toast.makeText(PayDemoActivity.this,
+//                                "授权成功\n" + String.format("authCode:%s", authResult.getAuthCode()), Toast.LENGTH_SHORT)
+//                                .show();
+//                    } else {
+//                        // 其他状态值则为授权失败
+//                        Toast.makeText(PayDemoActivity.this,
+//                                "授权失败" + String.format("authCode:%s", authResult.getAuthCode()), Toast.LENGTH_SHORT).show();
+//
+//                    }
+//                    break;
+//                }
+                default:
+                    break;
+            }
+        }
 
+        ;
+    };
+
+    private void start() {
+
+        Runnable payRunnable = new Runnable() {
+
+            @Override
+            public void run() {
+                Log.d("AAAAAAAAAAAA", goodinfo);
+                PayTask alipay = new PayTask(MainActivity.this);
+                Map<String, String> result = alipay.payV2(goodinfo, true);
+                Log.i("msp", result.toString());
+
+                Message msg = new Message();
+                msg.what = SDK_PAY_FLAG;
+                msg.obj = result;
+                mHandler.sendMessage(msg);
+            }
+        };
+
+        Thread payThread = new Thread(payRunnable);
+        payThread.start();
+    }
+    private void aipay() {
+ OkGo.<String>post("http://mogu.vipgz1.idcfengye.com/ECanReach/payAlis.do")
+         .tag(this)
+         .params("money","0.01")
+         .execute(new StringCallback() {
+             @Override
+             public void onSuccess(Response<String> response) {
+                 goodinfo=response.body();
+                 start();
+
+
+//                 WeiXinBean s=GsonUtil.parseJsonWithGson(response.body(),WeiXinBean.class);
+//
+//                 WXPayUtils.WXPayBuilder builder = new WXPayUtils.WXPayBuilder();
+//                 builder.setAppId(s.getAppid())
+//                         .setPrepayId(s.getPrepayid())
+//                         .setPartnerId(s.getPartnerid())
+//                         .setTimeStamp(s.getTimestamp())
+//                         .setNonceStr(s.getNoncestr())
+//                         .setPackageValue(s.getPackageX())
+//                         .setSign(s.getSign())
+//                         .build()
+//                         .toWXPayNotSign(context,s.getAppid());
+             }
+         });
+    }
 
     private AMapLocationClientOption getDefaultOption() {
         AMapLocationClientOption mOption = new AMapLocationClientOption();
@@ -293,7 +418,7 @@ public class MainActivity extends Activity implements JsApi.JsCallback, UMShareL
     };
 
     private void initWight() {
-        ImagePicker imagePicker = ImagePicker.getInstance();
+        imagePicker = ImagePicker.getInstance();
         imagePicker.setImageLoader(new GlideImageLoader());   //设置图片加载器
         imagePicker.setShowCamera(true);  //显示拍照按钮
         imagePicker.setCrop(true);        //允许裁剪（单选才有效）
@@ -304,7 +429,7 @@ public class MainActivity extends Activity implements JsApi.JsCallback, UMShareL
         imagePicker.setFocusHeight(800);  //裁剪框的高度。单位像素（圆形自动取宽高最小值）
         imagePicker.setOutPutX(1000);//保存文件的宽度。单位像素
         imagePicker.setOutPutY(1000);//保存文件的高度。单位像素
-        imagePicker.setMultiMode(true);   //允许剪切
+        imagePicker.setMultiMode(true);
     }
 
     WebViewClient webViewClient = new WebViewClient() {
@@ -397,7 +522,15 @@ public class MainActivity extends Activity implements JsApi.JsCallback, UMShareL
     }
 
     @Override
-    public void jsTakeUpload(Object params) {
+    public void addHeadImg(Object params) {
+        LogUtils.d("图片数据是" + params.toString());
+        PhotoOneGet photoOneGet = GsonUtil.parseJsonWithGson(params.toString(), PhotoOneGet.class);
+        userid = photoOneGet.getUserId();
+        token = photoOneGet.getToken();
+        type_photo = 1;
+        imagePicker.setSelectLimit(1);
+        Intent intenta = new Intent(context, ImageGridActivity.class);
+        startActivityForResult(intenta, IMAGE_PICKER);
 
     }
 
@@ -501,13 +634,20 @@ public class MainActivity extends Activity implements JsApi.JsCallback, UMShareL
     private void uploadImages(
 //            Map<String, File> map)
             List<File> map) {
-        OkGo.<String>post("")
+        OkGo.<String>post("http://5ziwcz.natappfree.cc/mall/addPhotos")
                 .tag(this)
-                .params("", "")
-                .addFileParams("", map)
+                .params("user_id", "1000000000")
+                .params("token", "VVON8nUAEzg7fSsh4p194TBUQtgW-rVfU7xKzpyTWe8=")
+                .addFileParams("file", map)
                 .execute(new StringCallback() {
                     @Override
                     public void onSuccess(Response<String> response) {
+                        LogUtils.d("数据是" + response.body());
+                        PhotoOne photoOne = GsonUtil.parseJsonWithGson(response.body(), PhotoOne.class);
+                        if (photoOne.getMeta().getCode() == 200) {
+                            dismissDig();
+                            LogUtils.d("数据是图片" + photoOne.getData());
+                        }
 
                     }
                 });
@@ -698,13 +838,19 @@ public class MainActivity extends Activity implements JsApi.JsCallback, UMShareL
                     LogUtils.d("数据是:" + headImage);
 //                    testokGO();
                 }
-                if (paths.size() == 1) {
-                    LogUtils.d("数据是" + paths);
+                if (type_photo == 1) {
                     uploadAvatar(paths.get(0));
-                } else if (paths.size() > 1) {
-                    LogUtils.d("数据是多选" + paths);
+                } else if (type_photo == 2) {
                     compress(paths);
                 }
+
+//                if (paths.size() == 1) {
+//                    LogUtils.d("数据是" + paths);
+//                    uploadAvatar(paths.get(0));
+//                } else if (paths.size() > 1) {
+//                    LogUtils.d("数据是多选" + paths);
+//                    compress(paths);
+//                }
 
 
             } else {
@@ -726,21 +872,29 @@ public class MainActivity extends Activity implements JsApi.JsCallback, UMShareL
                 });
     }
 
-    private void uploadAvatar(String path) {
+    private void uploadAvatar(final String path) {
         LogUtils.d("数据是" + path);
 //        File file = new File(path);
         File file = new File(path);
-        OkGo.<String>post("http://39.105.148.182/qingniaozhongchou/wdt_imageUpload.do")
+        File newfile = CompressHelper.getDefault(context).compressToFile(file);
+        OkGo.<String>post("http://5fv9zd.natappfree.cc/mall/addPhotos")
                 .tag(this)
                 .isMultipart(true)
-                .params("userid", "8")
-                .params("headimg", file)
+                .params("user_id", userid)
+                .params("token", token)
+                .params("file", newfile)
                 .execute(new StringCallback() {
                     @Override
                     public void onSuccess(Response<String> response) {
                         LogUtils.d("成功是" + response.message());
-                        TestGoodsBean goodsBean = GsonUtil.parseJsonWithGson(response.body(), TestGoodsBean.class);
-                        LogUtils.d("数据是:" + goodsBean.getMsg());
+//                        TestGoodsBean goodsBean = GsonUtil.parseJsonWithGson(response.body(), TestGoodsBean.class);
+//                        LogUtils.d("数据是:" + goodsBean.getMsg());
+
+
+                        PhotoOne photoOne = GsonUtil.parseJsonWithGson(response.body(), PhotoOne.class);
+                        LogUtils.d("返回的数据是" + photoOne.getData());
+                        dWebView.callHandler("addHeadImgCallback", new Object[]{photoOne.getData()});
+
                     }
 
                     @Override

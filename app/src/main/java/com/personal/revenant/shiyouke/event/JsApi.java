@@ -23,8 +23,9 @@ public class JsApi {
     }
 
     @JavascriptInterface
-    public void uploadPhoto(Object params) {
-        jsCallback.jsTakeUpload(params);
+    public void addHeadImg(Object params) {
+        Log.d("图片数据是",params.toString());
+        jsCallback.addHeadImg(params);
     }
 
     @JavascriptInterface
@@ -68,7 +69,7 @@ public class JsApi {
         /**
          * 上传头像
          **/
-        void jsTakeUpload(Object params);
+        void addHeadImg(Object params);
 
         /**
          * 多图上传
